@@ -49,15 +49,24 @@ void ResourceRoom::print_status(void) {
 	printf("Print resource room status\n");
 }
 
+int ResourceRoom::get_faculty_count() {
+	return faculty_count;
+}
 
-// Call by reference
-// This is just an example. You can implement any function you need
+int ResourceRoom::get_student_count() {
+	return students_count;
+}
+
 void ResourceRoom::add_person(Person& p) {
-	// Do nothing.
+	if (p.get_role()) {	// 1 means student
+		students_count++;
+		return;
+	}
+	faculty_count++;
 }
 
 void ResourceRoom::faculty_wants_to_enter(Person& p) {
-	// TODO: implement faculty member entry synchronization.
+	
 }
 
 void ResourceRoom::student_wants_to_enter(Person& p) {

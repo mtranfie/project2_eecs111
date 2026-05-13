@@ -13,5 +13,12 @@ long get_elasped_time(struct timeval& start, struct timeval& end)
 	return mtime;
 }
 
+long get_next_person_interval() {
+    return std::rand() % 5 + 1;
+}
+
+long get_resource_room_duration() {
+    return 3 + std::rand() % 8;
+}
 
 

@@ -7,7 +7,6 @@ extern pthread_mutex_t mutex;
 void *threadfunc(void *parm)
 {
 	int status;
-	printf(" [Thread] Start\n");
 
 	printf(" [Thread] Locks\n");
 	status = pthread_mutex_lock(&mutex);

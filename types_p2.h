@@ -16,7 +16,6 @@
 
 class Person
 {
-
 	int role; // 0: faculty 1: student
 	std::string str_role;
 	struct timeval t_create;
@@ -52,26 +51,25 @@ public:
 // Class for the specialized resource room
 // You may need to add more class member variables and functions
 class ResourceRoom {
-	int status;
-
-
-	// You need to define the data structure to
-    // save the information of people using the resource room
-	// You can probably use Standard Template Library (STL) vector
-
+	int status;	// 0: empty, 1: faculty, 2: students
+	
+	int students_count;
+	int faculty_count;
 
 public:
 	ResourceRoom(){
-		status = EMPTY;
+		status 			= EMPTY;
+		students_count 	= 0;
+		faculty_count 	= 0;
 	}
 
 	// You need to use this function to print the ResourceRoom's status
 	void print_status(void);
 
-
-	// Call by reference
-	// This is just an example. You can implement any function you need
 	void add_person(Person& p);
+
+	int get_faculty_count();
+	int get_student_count();
 
 	void faculty_wants_to_enter(Person& p);
 	void student_wants_to_enter(Person& p);
@@ -81,12 +79,12 @@ public:
 };
 
 
-
-
-
-
-
-
+// Enum for sign
+enum Sign { 
+	empty,
+	student,
+	faculty
+};
 
 
 #endif
