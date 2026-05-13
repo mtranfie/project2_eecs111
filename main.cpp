@@ -16,12 +16,28 @@ struct timeval t_global_start;
 
 int main(int argc, char** argv)
 {
+	if (argc != 2) {
+		fprintf(stderr, "[ERROR] Expected 1 argument, but got (%d)\n", argc-1);
+		fprintf(stderr, "[USAGE] p2_exec <number>\n");
+		exit(1);
+	}
+
+	int N = 0;
+
+	try {
+		N = atoi(argv[1]);
+	} catch (const std::runtime_error e) {
+		fprintf(stderr, "Please enter a valid integer.\n");
+		exit(1);
+	}
+
 	// This is to set the global start time
 	gettimeofday(&t_global_start, NULL);
 
 	pthread_t       tid;
 	int             status = 0;
 
+	/*
 	// Example code for sleep and class usage.
 	Person p1;
 	p1.set_order(1);
@@ -48,6 +64,7 @@ int main(int argc, char** argv)
 	if(pthread_join(tid, NULL)) {
 		fprintf(stderr, "Error joining thread\n");
 	}
+	*/
 
 	return 0;
 }
