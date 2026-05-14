@@ -21,4 +21,14 @@ long get_resource_room_duration() {
     return 3 + std::rand() % 8;
 }
 
+const char* print_role(int role) {
+	return (role == 1) ? "Student" : "Faculty Member";
+}
+
+long get_ms_since_start() {
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    return get_elasped_time(t_global_start, now);
+}
+
 

@@ -3,25 +3,26 @@
 
 extern pthread_cond_t  cond;
 extern pthread_mutex_t mutex;
+extern ResourceRoom room;
 
-void *threadfunc(void *parm)
+void *threadfunc(void *param)
 {
+	Person* p = (Person*)param;
 	int status;
 
-	printf(" [Thread] Locks\n");
-	status = pthread_mutex_lock(&mutex);
-
-	printf(" [Thread] Blocked\n");
-	status = pthread_cond_wait(&cond, &mutex);
-
-	printf(" [Thread] Starts again.\n");
-	for (int i=0; i<3; i++) {
-		printf(" [Thread] Complete thread after (%d) seconds\n", (3-i));
-		usleep(MSEC(1000));
+	if (p->get_role() == 0) {
+		room.faculty_wants_to_enter(*p);
+	} else {
+		room.student_wants_to_enter(*p);
 	}
 
-	printf(" [Thread] Unlocks\n");
-	status = pthread_mutex_unlock(&mutex);
-	printf(" [Thread] Complete\n");
+	usleep(MSEC(p->get_time()));
+
+	if (p->get_role() == 0) {
+		room.faculty_leaves(*p);
+	} else {
+		room.student_leaves(*p);
+	}
+
 	return NULL;
 }

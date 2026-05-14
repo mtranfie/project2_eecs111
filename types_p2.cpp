@@ -24,11 +24,11 @@ int Person::ready_to_leave(void) {
 
 
 
-
+// may delete these because what is the purpose?
 void Person::start(void) {
 	gettimeofday(&t_start, NULL);
-	printf("(%lu)th person enters the resource room: \n", order);
-	printf(" - (%lu) milliseconds after the creation\n", get_elasped_time(t_create, t_start));
+	printf("[%lu][Input] A person (%s) goes into the queue.\n", get_elasped_time(t_create, t_start), print_role(role));
+
 }
 
 void Person::complete(void) {
@@ -44,9 +44,26 @@ Person::Person() {
 
 
 
+void ResourceRoom::enqueue(Person& p) {
+	pthread_mutex_lock(&mutex);
+
+	if (p.get_role() == 0) waiting_faculty++;
+	else                   waiting_student++;
+
+	int total = waiting_faculty + waiting_student;
+	const char* q_state = (total > 0) ? "not empty" : "empty";
+
+	printf("[%02ld ms][Input] A person (%s) goes into the queue.\n",
+		get_ms_since_start(), print_role(p.get_role()));
+	printf("[%02ld ms][Queue] Waiting queue is %s. Status: Total: %d (Faculty: %d, Students: %d)\n",
+		get_ms_since_start(), q_state, total, waiting_faculty, waiting_student);
+
+	pthread_mutex_unlock(&mutex);
+}
+
 // You need to use this function to print the ResourceRoom's status
 void ResourceRoom::print_status(void) {
-	printf("Print resource room status\n");
+	printf("Status: Total: %d (Faculty: %d, Students: %d)\n", students_count + faculty_count, faculty_count, students_count);
 }
 
 int ResourceRoom::get_faculty_count() {
@@ -66,17 +83,85 @@ void ResourceRoom::add_person(Person& p) {
 }
 
 void ResourceRoom::faculty_wants_to_enter(Person& p) {
+	pthread_mutex_lock(&mutex);
 	
+	waiting_faculty--;
+
+	while (status == STUDENTINSIDE) {
+		pthread_cond_wait(&faculty_cond, &mutex);
+	}
+
+	printf("[%lu ms][Queue] Send (Faculty Member) into the resource room (Stay %lu ms), Status: Total: %d (Faculty: %d, Students: %d)\n", 
+		get_ms_since_start(), p.get_time(), faculty_count + students_count, faculty_count, students_count);
+	
+	faculty_count++;
+	status = FACULTYINSIDE;
+	
+	printf("[%lu ms][Resource Room] (Faculty Member) goes into the resource room. State is (FacultyInside) : Total: %d (Faculty: %d, Students: %d)",
+		get_ms_since_start(), faculty_count + students_count, faculty_count, students_count);
+
+	pthread_mutex_unlock(&mutex);
 }
 
 void ResourceRoom::student_wants_to_enter(Person& p) {
-	// TODO: implement student entry synchronization.
-}
+	pthread_mutex_lock(&mutex);
+	waiting_student--;
+
+	while (status == FACULTYINSIDE) {
+		pthread_cond_wait(&student_cond, &mutex);
+	}
+
+	printf("[%lu ms][Queue] Send (Student) into the resource room (Stay %lu ms), Status: Total: %d (Faculty: %d, Students: %d)\n", 
+		get_ms_since_start(), p.get_time(), faculty_count + students_count, faculty_count, students_count);
+	
+	faculty_count++;
+	status = STUDENTINSIDE;
+	
+	printf("[%lu ms][Resource Room] (Student) goes into the resource room. State is (StudentInside) : Total: %d (Faculty: %d, Students: %d)",
+		get_ms_since_start(), faculty_count + students_count, faculty_count, students_count);
+
+	pthread_mutex_unlock(&mutex);}
 
 void ResourceRoom::faculty_leaves(Person& p) {
-	// TODO: implement faculty member exit synchronization.
+	pthread_mutex_lock(&mutex);
+
+	int old_status = status;
+
+	faculty_count--;
+
+	if (faculty_count == 0) {
+		status = EMPTY;
+		pthread_cond_broadcast(&student_cond);	// wake students first to avoid starvation
+		pthread_cond_broadcast(&faculty_cond);
+	}
+
+	const char* status_change_text = (old_status != status) ? "Status is changed," : "State is";
+	const char* status_text = (status == EMPTY) ? "Empty" : (status == STUDENTINSIDE) ? "StudentInside" : "FacultyInside";
+
+	printf("[%lu ms][Resource Room] (Faculty Member) left the resource room. %s (%s) : Total: %d (Faculty: %d, Students: %d)\n",
+		get_ms_since_start(), status_change_text, status_text, faculty_count + students_count, faculty_count, students_count);
+
+	pthread_mutex_unlock(&mutex);
 }
 
 void ResourceRoom::student_leaves(Person& p) {
-	// TODO: implement student exit synchronization.
+	pthread_mutex_lock(&mutex);
+
+	int old_status = status;
+
+	students_count--;
+
+	if (students_count == 0) {
+		status = EMPTY;
+		pthread_cond_broadcast(&faculty_cond);	// wake faculty first to avoid starvation
+		pthread_cond_broadcast(&student_cond);
+	}
+
+	const char* status_change_text = (old_status != status) ? "Status is changed," : "State is";
+	const char* status_text = (status == EMPTY) ? "Empty" : (status == STUDENTINSIDE) ? "StudentInside" : "FacultyInside";
+
+	printf("[%lu ms][Resource Room] (Student) left the resource room. %s (%s) : Total: %d (Faculty: %d, Students: %d)\n",
+		get_ms_since_start(), status_change_text, status_text, faculty_count + students_count, faculty_count, students_count);
+
+	pthread_mutex_unlock(&mutex);
 }

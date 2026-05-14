@@ -11,7 +11,9 @@
 #include "types_p2.h"
 
 
-void *threadfunc(void *parm);
+
+
+void *threadfunc(void *param);
 
 
 

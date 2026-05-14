@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <unistd.h>
+#include <pthread.h>
 
 #define EMPTY        0
 #define FACULTYINSIDE 1
@@ -55,12 +56,23 @@ class ResourceRoom {
 	
 	int students_count;
 	int faculty_count;
+	int waiting_student;
+	int waiting_faculty;
+
+	pthread_mutex_t mutex;
+	pthread_cond_t	faculty_cond;
+	pthread_cond_t	student_cond;
 
 public:
 	ResourceRoom(){
 		status 			= EMPTY;
 		students_count 	= 0;
 		faculty_count 	= 0;
+		waiting_student = 0;
+		waiting_faculty	= 0;
+		mutex			= PTHREAD_MUTEX_INITIALIZER;
+		faculty_cond 	= PTHREAD_COND_INITIALIZER;
+		student_cond 	= PTHREAD_COND_INITIALIZER;
 	}
 
 	// You need to use this function to print the ResourceRoom's status
@@ -70,6 +82,8 @@ public:
 
 	int get_faculty_count();
 	int get_student_count();
+
+	void enqueue(Person& p);
 
 	void faculty_wants_to_enter(Person& p);
 	void student_wants_to_enter(Person& p);
