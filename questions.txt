@@ -1,0 +1,19 @@
+1. The design uses several mutex and conditional variables to ensure faculty and staff are not in the resource room concurrently.
+If a faculty or student wants to enter, they must first check the "sign" to see if the room is empty, facultyinside, or studentinside. The sign
+is stored as a status variable part of the ResourceRoom class. Whenever a faculty member calls faculty_wants_to_enter it must checkfor while(status == STUDENTSINSIDE)
+before it is able to enter. If there is a student inside, it blocks until the room is empty. Because only one group is able to set the status of the room at a time, and the other 
+group can only enter when the sign is empty, the two groups are never inside together.
+All shared variables (status, faculty_count, student_count, waiting_faculty, waiting_student) are protected by the mutex pthread_mutex_t mutex inside ResourceRoom.
+Every function that wishes to read or write to these variables must first obtain the mutex lock. Once they are done reading or writing to the shared variables, they
+must release the lock. 
+
+2. The code does not use busy-wait. This is because of the functionality of pthreads. In line line 88 of types_p2.cpp, there is a while loop
+that checks if the current "sign" status is set to STUDENTSINSIDE so the thread knows if it can continue is sending the waiting faculty inside.
+If there is a student, a call to pthread_cond_wait is made which asks the thread to sleep and wait until signaled to wake. This avoids busy-wait
+which would waste CPU resources. Also in lines 109-111 in types_p2.cpp, a similar approach is used for students attempting to enter. 
+
+3. Deadlock was prevented by ensuring that any open mutex locks where unlocked once necessary access to shared_data is completed. Additionally, every waiting thread
+is eventually woken up. When the last faculty or student member leaves (faculty_count == 0 or student_count == 0), status is set to EMPTY, and pthread_cond_broadcasat is called on both 
+student_cond and faculty_cond. This will ensure that no thread stays blocked forever waiting on a condition that has already been satisfied.
+Starvation is reduced by checking of the opposing side needs to enter once a room is empty. Line 136 in types_p2.cpp as part of the faculty_leaves function checks for 
+waiting students before checking for waiting faculty. This prevents one group being favored over the other. 
