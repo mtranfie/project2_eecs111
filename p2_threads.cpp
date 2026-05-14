@@ -1,8 +1,6 @@
 #include "p2_threads.h"
 #include "utils.h"
 
-extern pthread_cond_t  cond;
-extern pthread_mutex_t mutex;
 extern ResourceRoom room;
 
 void *threadfunc(void *param)

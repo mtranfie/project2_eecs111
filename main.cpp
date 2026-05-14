@@ -11,7 +11,7 @@
 #include "utils.h"
 
 struct timeval t_global_start;
-ResourceRoom room;
+ResourceRoom   room;
 
 int main(int argc, char** argv)
 {
