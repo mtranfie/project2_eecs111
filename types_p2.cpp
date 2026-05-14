@@ -84,20 +84,20 @@ void ResourceRoom::add_person(Person& p) {
 
 void ResourceRoom::faculty_wants_to_enter(Person& p) {
 	pthread_mutex_lock(&mutex);
-	
-	waiting_faculty--;
 
 	while (status == STUDENTINSIDE) {
 		pthread_cond_wait(&faculty_cond, &mutex);
 	}
 
-	printf("[%lu ms][Queue] Send (Faculty Member) into the resource room (Stay %lu ms), Status: Total: %d (Faculty: %d, Students: %d)\n", 
-		get_ms_since_start(), p.get_time(), faculty_count + students_count, faculty_count, students_count);
-	
+	waiting_faculty--;	// dequeue after wait, so count is correct while waiting
+
+	printf("[%02ld ms][Queue] Send (Faculty Member) into the resource room (Stay %ld ms), Status: Total: %d (Faculty: %d, Students: %d)\n",
+		get_ms_since_start(), p.get_time(), waiting_faculty + waiting_student, waiting_faculty, waiting_student);
+
 	faculty_count++;
 	status = FACULTYINSIDE;
-	
-	printf("[%lu ms][Resource Room] (Faculty Member) goes into the resource room. State is (FacultyInside) : Total: %d (Faculty: %d, Students: %d)",
+
+	printf("[%02ld ms][Resource Room] (Faculty Member) goes into the resource room, State is (FacultyInside): Total: %d (Faculty: %d, Students: %d)\n",
 		get_ms_since_start(), faculty_count + students_count, faculty_count, students_count);
 
 	pthread_mutex_unlock(&mutex);
@@ -105,22 +105,24 @@ void ResourceRoom::faculty_wants_to_enter(Person& p) {
 
 void ResourceRoom::student_wants_to_enter(Person& p) {
 	pthread_mutex_lock(&mutex);
-	waiting_student--;
 
 	while (status == FACULTYINSIDE) {
 		pthread_cond_wait(&student_cond, &mutex);
 	}
 
-	printf("[%lu ms][Queue] Send (Student) into the resource room (Stay %lu ms), Status: Total: %d (Faculty: %d, Students: %d)\n", 
-		get_ms_since_start(), p.get_time(), faculty_count + students_count, faculty_count, students_count);
-	
-	faculty_count++;
+	waiting_student--;	// dequeue after wait, so count is correct while waiting
+
+	printf("[%02ld ms][Queue] Send (Student) into the resource room (Stay %ld ms), Status: Total: %d (Faculty: %d, Students: %d)\n",
+		get_ms_since_start(), p.get_time(), waiting_faculty + waiting_student, waiting_faculty, waiting_student);
+
+	students_count++;
 	status = STUDENTINSIDE;
-	
-	printf("[%lu ms][Resource Room] (Student) goes into the resource room. State is (StudentInside) : Total: %d (Faculty: %d, Students: %d)",
+
+	printf("[%02ld ms][Resource Room] (Student) goes into the resource room, State is (StudentInside): Total: %d (Faculty: %d, Students: %d)\n",
 		get_ms_since_start(), faculty_count + students_count, faculty_count, students_count);
 
-	pthread_mutex_unlock(&mutex);}
+	pthread_mutex_unlock(&mutex);
+}
 
 void ResourceRoom::faculty_leaves(Person& p) {
 	pthread_mutex_lock(&mutex);
@@ -135,10 +137,10 @@ void ResourceRoom::faculty_leaves(Person& p) {
 		pthread_cond_broadcast(&faculty_cond);
 	}
 
-	const char* status_change_text = (old_status != status) ? "Status is changed," : "State is";
+	const char* status_change_text = (old_status != status) ? "Status is changed, Status is" : "State is";
 	const char* status_text = (status == EMPTY) ? "Empty" : (status == STUDENTINSIDE) ? "StudentInside" : "FacultyInside";
 
-	printf("[%lu ms][Resource Room] (Faculty Member) left the resource room. %s (%s) : Total: %d (Faculty: %d, Students: %d)\n",
+	printf("[%02ld ms][Resource Room] (Faculty Member) left the resource room. %s (%s) : Total: %d (Faculty: %d, Students: %d)\n",
 		get_ms_since_start(), status_change_text, status_text, faculty_count + students_count, faculty_count, students_count);
 
 	pthread_mutex_unlock(&mutex);
@@ -157,10 +159,10 @@ void ResourceRoom::student_leaves(Person& p) {
 		pthread_cond_broadcast(&student_cond);
 	}
 
-	const char* status_change_text = (old_status != status) ? "Status is changed," : "State is";
+	const char* status_change_text = (old_status != status) ? "Status is changed, Status is" : "State is";
 	const char* status_text = (status == EMPTY) ? "Empty" : (status == STUDENTINSIDE) ? "StudentInside" : "FacultyInside";
 
-	printf("[%lu ms][Resource Room] (Student) left the resource room. %s (%s) : Total: %d (Faculty: %d, Students: %d)\n",
+	printf("[%02ld ms][Resource Room] (Student) left the resource room. %s (%s) : Total: %d (Faculty: %d, Students: %d)\n",
 		get_ms_since_start(), status_change_text, status_text, faculty_count + students_count, faculty_count, students_count);
 
 	pthread_mutex_unlock(&mutex);
